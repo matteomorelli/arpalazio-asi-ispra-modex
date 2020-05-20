@@ -53,7 +53,8 @@ def _parse_configuration_value(ini_path):
             'grid': cfg.get("model_data", "grid").strip("\""),
             'timestep': cfg.get("model_data", "timestep").strip("\""),
             'out_prefix': cfg.get("model_data", "out_prefix").strip("\""),
-            'out_dir': cfg.get("model_data", "out_dir").strip("\"")
+            'out_dir': cfg.get("model_data", "out_dir").strip("\""),
+            'out_value': cfg.get("model_data", "out_value").strip("\"")
         }
         ftp_ini = {
             'user': cfg.get("ftp", "user").strip("\""),
@@ -98,6 +99,11 @@ def main():
         logger.error("sys.exiting with error, check you logs")
         sys.exit(1)
     logger.debug("Configuration values: %s", conf_file)
+    # Compose input filename based on model type and ini options
+    # check input file existence
+    # check output directory existence
+    # extract model data with nco operator (ncks)
+    # if enabled do upload
 
 
 if __name__ == '__main__':
