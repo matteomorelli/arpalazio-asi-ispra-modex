@@ -9,6 +9,7 @@ import traceback
 import argparse
 import configparser
 import sys
+from nco import Nco
 from libs import utils_os
 from libs import utils
 
@@ -57,8 +58,11 @@ def _parse_configuration_value(ini_path):
             'out_value': cfg.get("model_data", "out_value").strip("\"")
         }
         ftp_ini = {
+            'enabled': cfg.get("ftp", "enabled").strip("\""),
+            'server': cfg.get("ftp", "server").strip("\""),
             'user': cfg.get("ftp", "user").strip("\""),
-            'password': cfg.get("ftp", "password").strip("\"")
+            'password': cfg.get("ftp", "password").strip("\""),
+            'remote_path': cfg.get("ftp", "remote_path").strip("\"")
         }
 
     except configparser.NoOptionError as err:
@@ -100,9 +104,50 @@ def main():
         sys.exit(1)
     logger.debug("Configuration values: %s", conf_file)
     # Compose input filename based on model type and ini options
-    # check input file existence
-    # check output directory existence
+    # Simulating class output
+    model_file = [
+        "FARM_conc_g4_20200526+000-023.nc",
+        "FARM_conc_g4_20200526+024-047.nc",
+        "FARM_conc_g4_20200526+048-071.nc",
+        "FARM_conc_g4_20200526+072-095.nc",
+        "FARM_conc_g4_20200526+096-119.nc"]
+    logger.info("Checking model data existence")
+    if utils.is_empty(model_file):
+        logger.error("Invalid filename list")
+        sys.exit(1)
+    # ncks runtime option
+    ncks_var = '-v ' + conf_file["model_data"]["out_value"]
+    ncks_opt = [
+        '--no-abc',
+        '-O',
+        ncks_var
+    ]
+    # check input file existence and
     # extract model data with nco operator (ncks)
+    nco = Nco()
+    for file_name in model_file:
+        in_filename = conf_file["model_data"]["indir"] + file_name
+        if not utils_os.is_valid_path(in_filename, "file"):
+            logger.error("%s does not exist", in_filename)
+            sys.exit(1)
+
+        out_filename = conf_file["model_data"]["out_dir"] + \
+            conf_file["model_data"]["out_prefix"] + \
+            file_name
+        # check output directory existence
+        if not utils_os.is_valid_path(
+                conf_file["model_data"]["out_dir"], "dir"):
+            logger.error(
+                "Directory %s does not exist",
+                conf_file["model_data"]["out_dir"])
+            sys.exit(1)
+        try:
+            logger.info("Parsing file: %s", in_filename)
+            nco.ncks(input=in_filename, output=out_filename, options=ncks_opt)
+        except:
+            logger.error("uncaught exception: %s", traceback.format_exc())
+            sys.exit(1)
+
     # if enabled do upload
 
 
