@@ -12,6 +12,7 @@ import sys
 from nco import Nco
 from libs import utils_os
 from libs import utils
+from libs import utils_ftp
 
 # Script version
 VERSION = "0.0.1"
@@ -58,9 +59,9 @@ def _parse_configuration_value(ini_path):
             'out_value': cfg.get("model_data", "out_value").strip("\"")
         }
         ftp_ini = {
-            'enabled': cfg.get("ftp", "enabled").strip("\""),
+            'enabled': cfg.get("ftp", "enabled").strip("\"").lower(),
             'server': cfg.get("ftp", "server").strip("\""),
-            'user': cfg.get("ftp", "user").strip("\""),
+            'username': cfg.get("ftp", "username").strip("\""),
             'password': cfg.get("ftp", "password").strip("\""),
             'remote_path': cfg.get("ftp", "remote_path").strip("\"")
         }
@@ -103,6 +104,7 @@ def main():
         logger.error("sys.exiting with error, check you logs")
         sys.exit(1)
     logger.debug("Configuration values: %s", conf_file)
+
     # Compose input filename based on model type and ini options
     # Simulating class output
     model_file = [
@@ -125,6 +127,7 @@ def main():
     # check input file existence and
     # extract model data with nco operator (ncks)
     nco = Nco()
+    ftp_file_list = []
     for file_name in model_file:
         in_filename = conf_file["model_data"]["indir"] + file_name
         if not utils_os.is_valid_path(in_filename, "file"):
@@ -144,11 +147,26 @@ def main():
         try:
             logger.info("Parsing file: %s", in_filename)
             nco.ncks(input=in_filename, output=out_filename, options=ncks_opt)
+            # if ftp transmission are enabled build a list
+            if conf_file["ftp_ini"]["enabled"] == "y":
+                ftp_file_list.append(out_filename)
         except:
             logger.error("uncaught exception: %s", traceback.format_exc())
             sys.exit(1)
 
     # if enabled do upload
+    if conf_file["ftp_ini"]["enabled"] == "y":
+        logger.info("FTP Upload enabled")
+        logger.debug("File to transmit: %s", ftp_file_list)
+        logger.debug("Transmission parameter: %s", conf_file["ftp_ini"])
+        ftp_transm_parameter = {
+            'srv_address': conf_file["ftp_ini"]['server'],
+            'ftp_usr': conf_file["ftp_ini"]['username'],
+            'ftp_psw': conf_file["ftp_ini"]['password'],
+            'ftp_path': conf_file["ftp_ini"]['remote_path']}
+        if not utils_ftp.ftp_file_upload(ftp_transm_parameter, ftp_file_list):
+            logger.error("Something wrong with data transmission.")
+            exit(1)
 
 
 if __name__ == '__main__':
