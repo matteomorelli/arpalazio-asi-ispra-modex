@@ -9,12 +9,14 @@ from time import strptime
 from libs import utils_os
 
 # Libs version
-VERSION = "1.0.2"
+VERSION = "1.0.3"
+
+# Initialise logger
+logger = logging.getLogger(__name__)
 
 
 def validate_input_time(time_string, kind_of):
     # initialize local logger
-    logger = logging.getLogger(__name__)
     logger.debug("Time string: %s", time_string)
     allowed_kind = ["d", "h"]
     if kind_of in allowed_kind:
@@ -37,7 +39,6 @@ def validate_input_time(time_string, kind_of):
 
 
 def is_empty(any_structure):
-    logger = logging.getLogger(__name__)
     logger.debug("Checking if empty data structure: %s", any_structure)
     if any_structure:
         # Structure is not empty
@@ -48,7 +49,6 @@ def is_empty(any_structure):
 
 
 def empty_value_in_dict(data):
-    logger = logging.getLogger(__name__)
     for key, value in data.items():
         logger.debug("Dict+value %s => %s", key, value)
         if isinstance(value, dict):
@@ -85,7 +85,6 @@ def validate_path(dict_path, kind_of):
 
 
 def validate_usr_input_polls(usr_list, valid_list):
-    logger = logging.getLogger(__name__)
     logger.debug("User list: %s", usr_list)
     logger.debug("Valid polls: %s", valid_list)
     if isinstance(usr_list, list) and isinstance(valid_list, list):
@@ -105,7 +104,6 @@ def validate_usr_input_polls(usr_list, valid_list):
 
 
 def build_launch_parameter(conf_dict, procedure_name):
-    logger = logging.getLogger(__name__)
     logger.debug("Procedure: %s", procedure_name)
     logger.debug("Configuration dict: %s", conf_dict)
     allowed_procedure = ["post_gap", "post_surfpro", "post_chem"]
