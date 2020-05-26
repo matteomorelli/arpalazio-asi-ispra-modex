@@ -8,6 +8,7 @@ import logging.config
 import traceback
 import argparse
 import configparser
+import datetime
 import sys
 from nco import Nco
 from libs import utils_os
@@ -33,10 +34,20 @@ def _define_check_args(parser):
     #   a tuple
     ##############################################
     parser.add_argument("ini_file", help="Location of configuration file")
+    parser.add_argument("-d", "--date",
+                        help="Model data day YYYY/MM/DD. Default: today")
     args = parser.parse_args()
+    # initialize variable
+    day = args.date
+
+    # Set optional value to default
+    if day is None:
+        day = datetime.datetime.strftime(
+            datetime.datetime.now(), '%Y/%m/%d')
 
     args_value = {
-        "ini_file": args.ini_file
+        "ini_file": args.ini_file,
+        "day": day
     }
     return args_value
 
@@ -91,16 +102,26 @@ def _parse_configuration_value(ini_path):
     return config
 
 
+def _build_ymd_day(day_with_slashes):
+    year, month, day = day_with_slashes.split("/")
+    return year + month + day
+
+
 def main():
     # Initialize value
+    day = None
     conf_file = None
     # Initialize argument parser
     parser = argparse.ArgumentParser()
     in_value = _define_check_args(parser)
     logger.debug("Passed arguments: %s", in_value)
+    # Starting input validation
+    logger.debug("Input day: %s", in_value["day"])
+    if utils.validate_input_time(in_value["day"], "d"):
+        day = _build_ymd_day(in_value["day"])
     if utils_os.simple_file_read(in_value["ini_file"]):
         conf_file = _parse_configuration_value(in_value["ini_file"])
-    if conf_file is None:
+    if day is None or conf_file is None:
         logger.error("sys.exiting with error, check you logs")
         sys.exit(1)
     logger.debug("Configuration values: %s", conf_file)
@@ -108,11 +129,11 @@ def main():
     # Compose input filename based on model type and ini options
     # Simulating class output
     model_file = [
-        "FARM_conc_g4_20200526+000-023.nc",
-        "FARM_conc_g4_20200526+024-047.nc",
-        "FARM_conc_g4_20200526+048-071.nc",
-        "FARM_conc_g4_20200526+072-095.nc",
-        "FARM_conc_g4_20200526+096-119.nc"]
+        "FARM_conc_g4_" + day + "+000-023.nc",
+        "FARM_conc_g4_" + day + "+024-047.nc",
+        "FARM_conc_g4_" + day + "+048-071.nc",
+        "FARM_conc_g4_" + day + "+072-095.nc",
+        "FARM_conc_g4_" + day + "+096-119.nc"]
     logger.info("Checking model data existence")
     if utils.is_empty(model_file):
         logger.error("Invalid filename list")
