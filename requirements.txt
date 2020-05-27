@@ -1,0 +1,5 @@
+configparser==5.0.0
+nco==1.0.0
+numpy==1.18.4
+python-json-logger==0.1.11
+scipy==1.4.1
