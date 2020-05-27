@@ -42,8 +42,11 @@ data_prefix="arpalazio_"
 data_outdir="/output/will/be/here/"
 
 [ftp]
-user="YOUR USERNAME"
-password="YOUR PASSWORD"
+enabled="Y"
+server="127.0.0.1"
+username="ftp_username"
+password="ftp_password"
+remote_path="/path/to/upload/file"
 ```
 ## Usage
 ### Running
@@ -54,18 +57,18 @@ $ python handler.py configuration_file.ini
 Run handler.py with -h option to receive instruction
 ```
 $ python handler.py -h
-
-usage: handler.py [-h] ini_file
+usage: handler.py [-h] [-d DATE] ini_file
 
 positional arguments:
-  ini_file    Location of configuration file
+  ini_file              Location of configuration file
 
 optional arguments:
-  -h, --help  show this help message and exit
+  -h, --help            show this help message and exit
+  -d DATE, --date DATE  Model data day YYYY/MM/DD. Default: today
 ```
 
 ### Log file
-Log file description here
+Log file are collected into log folder. Files are in json format compatible with datadog log management solution.
 
 ### Automation
 You can schedule this software to run in an autonomous way by adding it to crontab or windows task scheduler.

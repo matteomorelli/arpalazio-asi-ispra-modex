@@ -11,17 +11,32 @@ import configparser
 import datetime
 import sys
 from nco import Nco
+from nco import NCOException
 from libs import utils_os
 from libs import utils
 from libs import utils_ftp
 
 # Script version
-VERSION = "0.0.1"
+VERSION = "1.0.0"
 
+# Initialize logger configuration
 logging.config.fileConfig(
     'ini/logging.ini',
     disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
+
+# Costant declaration
+# Allowed timestep range
+MIN_TIMESTEP = 1
+MAX_TIMESTEP = 10
+# FARM model basic step suffix
+# TODO: integrate into a class
+FARM_STEP = [
+    "+000-023.nc",
+    "+024-047.nc",
+    "+048-071.nc",
+    "+072-095.nc",
+    "+096-119.nc"]
 
 
 def _define_check_args(parser):
@@ -86,7 +101,7 @@ def _parse_configuration_value(ini_path):
     except configparser.NoSectionError as err:
         logger.error("Missing section in INI file: %s", err)
         sys.exit(1)
-    except:
+    except Exception:
         logger.error("uncaught exception: %s", traceback.format_exc())
         sys.exit(1)
 
@@ -125,15 +140,29 @@ def main():
         logger.error("sys.exiting with error, check you logs")
         sys.exit(1)
     logger.debug("Configuration values: %s", conf_file)
+    # Check timestep validity
+    try:
+        timestep = int(conf_file["model_data"]["timestep"])
+        if not MIN_TIMESTEP <= timestep <= MAX_TIMESTEP:
+            logger.error(
+                "Timestep is out of allowed value %s <= timestep <= %s",
+                MIN_TIMESTEP,
+                MAX_TIMESTEP)
+            sys.exit(1)
+    except ValueError:
+        logger.error("Given timestep is not a valid number")
+        sys.exit(1)
 
     # Compose input filename based on model type and ini options
-    # Simulating class output
-    model_file = [
-        "FARM_conc_g4_" + day + "+000-023.nc",
-        "FARM_conc_g4_" + day + "+024-047.nc",
-        "FARM_conc_g4_" + day + "+048-071.nc",
-        "FARM_conc_g4_" + day + "+072-095.nc",
-        "FARM_conc_g4_" + day + "+096-119.nc"]
+    # Build simple FARM concentration filename, just for crude operation
+    # TODO: Write a class capable of handling input from various AQ model
+    model_file = []
+    for step in range(timestep):
+        farm_file = (conf_file["model_data"]["type"], "_conc_",
+                     conf_file["model_data"]["grid"], "_",
+                     day, FARM_STEP[step], ".nc")
+        model_file.append(''.join(farm_file))
+
     logger.info("Checking model data existence")
     if utils.is_empty(model_file):
         logger.error("Invalid filename list")
@@ -171,8 +200,8 @@ def main():
             # if ftp transmission are enabled build a list
             if conf_file["ftp_ini"]["enabled"] == "y":
                 ftp_file_list.append(out_filename)
-        except:
-            logger.error("uncaught exception: %s", traceback.format_exc())
+        except NCOException as err:
+            logger.error("Error executing ncks: %s", err)
             sys.exit(1)
 
     # if enabled do upload
