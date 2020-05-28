@@ -17,7 +17,7 @@ from libs import utils
 from libs import utils_ftp
 
 # Script version
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 
 # Initialize logger configuration
 logging.config.fileConfig(
@@ -32,11 +32,11 @@ MAX_TIMESTEP = 10
 # FARM model basic step suffix
 # TODO: integrate into a class
 FARM_STEP = [
-    "+000-023.nc",
-    "+024-047.nc",
-    "+048-071.nc",
-    "+072-095.nc",
-    "+096-119.nc"]
+    "+000-023",
+    "+024-047",
+    "+048-071",
+    "+072-095",
+    "+096-119"]
 
 
 def _define_check_args(parser):
