@@ -10,6 +10,7 @@ import argparse
 import configparser
 import datetime
 import sys
+import json
 from nco import Nco
 from nco import NCOException
 from libs import utils_os
@@ -17,7 +18,7 @@ from libs import utils
 from libs import utils_ftp
 
 # Script version
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 
 # Initialize logger configuration
 logging.config.fileConfig(
@@ -29,6 +30,10 @@ logger = logging.getLogger(__name__)
 # Allowed timestep range
 MIN_TIMESTEP = 1
 MAX_TIMESTEP = 10
+
+# File log handler from logginf.ini
+LOG_FILE = "log/handler.log"
+
 # FARM model basic step suffix
 # TODO: integrate into a class
 FARM_STEP = [
@@ -37,6 +42,20 @@ FARM_STEP = [
     "+048-071",
     "+072-095",
     "+096-119"]
+
+# Service default metadata
+# Valid value:
+# subtype = MAN | AUTO
+# status = FAILURE | COMPLETE
+metadata = {
+    "metadata": {
+        "time": None,
+        "service": "asi-ispra-modex",
+        "type": "RUN",
+        "subtype": "MAN",
+        "status": "FAILURE"
+    }
+}
 
 
 def _define_check_args(parser):
@@ -51,9 +70,12 @@ def _define_check_args(parser):
     parser.add_argument("ini_file", help="Location of configuration file")
     parser.add_argument("-d", "--date",
                         help="Model data day YYYY/MM/DD. Default: today")
+    parser.add_argument("-a", "--auto", default=False, action='store_true',
+                        help="Set run flag to AUTO.")
     args = parser.parse_args()
     # initialize variable
     day = args.date
+    auto_run = args.auto
 
     # Set optional value to default
     if day is None:
@@ -62,7 +84,8 @@ def _define_check_args(parser):
 
     args_value = {
         "ini_file": args.ini_file,
-        "day": day
+        "day": day,
+        "auto_run": auto_run
     }
     return args_value
 
@@ -139,6 +162,10 @@ def main():
     if day is None or conf_file is None:
         logger.error("sys.exiting with error, check you logs")
         sys.exit(1)
+    auto_run = in_value["auto_run"]
+    # Update metadata
+    metadata["metadata"]["time"] = day
+    metadata["metadata"]["subtype"] = _run_type(auto_run)
     logger.debug("Configuration values: %s", conf_file)
     # Check timestep validity
     try:
@@ -217,6 +244,9 @@ def main():
         if not utils_ftp.ftp_file_upload(ftp_transm_parameter, ftp_file_list):
             logger.error("Something wrong with data transmission.")
             exit(1)
+    # Update metadata
+    metadata["metadata"]["status"] == "COMPLETE"
+    logger.info("Run completed successfully", extra=metadata)
 
 
 if __name__ == '__main__':
