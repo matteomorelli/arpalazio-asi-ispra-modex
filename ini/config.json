@@ -1,0 +1,15 @@
+{
+    "service_name": "asi-ispra-modex",
+    "type": {
+        "run": "RUN"
+    },
+    "subtype": {
+        "man": "MAN",
+        "auto": "AUTO"
+    },
+    "status": {
+        "fail": "FAILURE",
+        "done": "COMPLETE"
+    }
+
+}
